@@ -7,5 +7,5 @@ return [
     'server_mode' => env('TROPIPAY_SERVER_MODE', 'Development'),
     'api_url_development' => 'https://tropipay-dev.herokuapp.com/api/v2',
     'api_url_production' => 'https://www.tropipay.com/api/v2',
-    'currency' => 'EUR',
+    'currency' => 'USD',
 ];

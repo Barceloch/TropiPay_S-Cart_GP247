@@ -5,11 +5,12 @@
 #App\GP247\Plugins\TropiPay\AppConfig.php
 namespace App\GP247\Plugins\TropiPay;
 
-use App\GP247\Plugins\TropiPay\Models\ExtensionModel;
 use GP247\Core\Models\AdminConfig;
 use GP247\Core\Models\AdminHome;
 use GP247\Core\ExtensionConfigDefault;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+
 class AppConfig extends ExtensionConfigDefault
 {
     public function __construct()
@@ -17,7 +18,7 @@ class AppConfig extends ExtensionConfigDefault
         //Read config from gp247.json
         $config = file_get_contents(__DIR__.'/gp247.json');
         $config = json_decode($config, true);
-    	$this->configGroup = $config['configGroup'];
+        $this->configGroup = $config['configGroup'];
         $this->configKey = $config['configKey'];
         $this->configCode = $config['configCode'] ?? $this->configKey;
         $this->requireCore = $config['requireCore'] ?? [];
@@ -37,20 +38,55 @@ class AppConfig extends ExtensionConfigDefault
 
     public function install()
     {
-        $return = ['error' => 0, 'msg' => 'Install successful!'];
-        $this->copyPublicFiles();
-        $this->createConfigs();
-        \Illuminate\Support\Facades\Cache::forget('gp247_payment_methods');
+        $check = AdminConfig::where('key', $this->configKey)
+            ->where('group', $this->configGroup)->first();
+        if ($check) {
+            //Check Plugin key exist
+            $return = ['error' => 1, 'msg' =>  gp247_language_render('admin.extension.plugin_exist')];
+        } else {
+            //Insert plugin to config
+            $dataInsert = [
+                [
+                    'group'  => $this->configGroup,
+                    'code'    => $this->configCode,
+                    'key'    => $this->configKey,
+                    'sort'   => 0,
+                    'store_id' => GP247_STORE_ID_GLOBAL,
+                    'value'  => self::ON, //Enable extension
+                    'detail' => $this->appPath.'::lang.title',
+                ],
+            ];
+
+            // Inserta las configuraciones específicas del plugin
+            $this->insertPluginConfigs($dataInsert);
+
+            try {
+                AdminConfig::insert(
+                    $dataInsert
+                );
+                (new ExtensionModel)->installExtension();
+                $return = ['error' => 0, 'msg' => gp247_language_render('admin.extension.install_success')];
+            } catch (\Throwable $e) {
+                $return = ['error' => 1, 'msg' => $e->getMessage()];
+            }
+        }
+
         return $return;
     }
 
     public function uninstall()
     {
-        $return = ['error' => 0, 'msg' => 'Uninstall successful!'];
-        AdminConfig::where('code', 'TropiPay')->delete();
-        \Illuminate\Support\Facades\Cache::forget('gp247_payment_methods');
-        File::deleteDirectory(public_path('GP247/Plugins/TropiPay'));
-        return $return;
+        try {
+            AdminConfig::where('code', 'TropiPay')->delete();
+            \Illuminate\Support\Facades\Cache::forget('gp247_payment_methods');
+            if (File::isDirectory(public_path('GP247/Plugins/TropiPay'))) {
+                File::deleteDirectory(public_path('GP247/Plugins/TropiPay'));
+            }
+            return ['error' => 0, 'msg' => 'Uninstall successful!'];
+        } catch (\Exception $e) {
+            Log::error('TropiPay Uninstall Error: ' . $e->getMessage());
+            return ['error' => 1, 'msg' => 'Uninstall failed: ' . $e->getMessage()];
+        }
     }
     
     public function enable()
@@ -86,7 +122,6 @@ class AppConfig extends ExtensionConfigDefault
         return $return;
     }
 
-
     public function setupStore($storeId = null)
     {
         $this->createConfigs($storeId);
@@ -99,9 +134,7 @@ class AppConfig extends ExtensionConfigDefault
         return ['error' => 0, 'msg' => 'Remove store successful!'];
     }
 
-
     // Process when click button plugin in admin    
-    
     public function clickApp()
     {
         //
@@ -109,8 +142,6 @@ class AppConfig extends ExtensionConfigDefault
 
     /**
      * Get info plugin
-     *
-     * @return  [type]  [return description]
      */
     public function getInfo()
     {
@@ -123,12 +154,13 @@ class AppConfig extends ExtensionConfigDefault
             'version' => $this->version,
             'auth' => $this->auth,
             'link' => $this->link,
-            'value' => 0, // this return need for plugin shipping
+            'value' => 0,
             'appPath' => $this->appPath
         ];
 
         return $arrData;
     }
+
     /**
      * Copiar archivos públicos
      */
@@ -150,6 +182,9 @@ class AppConfig extends ExtensionConfigDefault
      */
     private function createConfigs($storeId = null)
     {
+        // Usar la constante GP247_STORE_ID_GLOBAL si no se proporciona store_id
+        $storeId = $storeId ?? GP247_STORE_ID_GLOBAL;
+        
         $configs = [
             ['code' => 'TropiPay', 'key' => 'client_id', 'value' => '', 'sort' => 1, 'detail' => 'Client ID', 'store_id' => $storeId],
             ['code' => 'TropiPay', 'key' => 'client_secret', 'value' => '', 'sort' => 2, 'detail' => 'Client Secret', 'store_id' => $storeId],
@@ -160,9 +195,61 @@ class AppConfig extends ExtensionConfigDefault
 
         foreach ($configs as $config) {
             AdminConfig::updateOrCreate(
-                ['code' => $config['code'], 'key' => $config['key'], 'store_id' => $config['store_id']],
+                [
+                    'code' => $config['code'], 
+                    'key' => $config['key'], 
+                    'store_id' => $config['store_id']
+                ],
                 $config
             );
         }
+    }
+
+    /**
+     * Insertar configuraciones específicas del plugin
+     */
+    private function insertPluginConfigs(&$dataInsert)
+    {
+        // Agrega aquí las configuraciones específicas del plugin
+        // Por ejemplo, para TropiPay:
+        $dataInsert[] = [
+            'group'  => $this->configGroup,
+            'code'   => $this->configCode.'_config', // Código para agrupar las configs
+            'key'    => 'client_id',
+            'sort'   => 0,
+            'store_id' => GP247_STORE_ID_GLOBAL,
+            'value'  => '',
+            'detail' => 'Client ID para TropiPay',
+        ];
+
+        $dataInsert[] = [
+            'group'  => $this->configGroup,
+            'code'   => $this->configCode.'_config',
+            'key'    => 'client_secret',
+            'sort'   => 0,
+            'store_id' => GP247_STORE_ID_GLOBAL,
+            'value'  => '',
+            'detail' => 'Client Secret para TropiPay',
+        ];
+
+        $dataInsert[] = [
+            'group'  => $this->configGroup,
+            'code'   => $this->configCode.'_config',
+            'key'    => 'server_mode',
+            'sort'   => 0,
+            'store_id' => GP247_STORE_ID_GLOBAL,
+            'value'  => 'Development',
+            'detail' => 'Modo del servidor TropiPay (Development/Production)',
+        ];
+
+        $dataInsert[] = [
+            'group'  => $this->configGroup,
+            'code'   => $this->configCode.'_config',
+            'key'    => 'currency',
+            'sort'   => 0,
+            'store_id' => GP247_STORE_ID_GLOBAL,
+            'value' => 'EUR',
+            'detail' => 'Moneda para TropiPay',
+        ];
     }
 }
