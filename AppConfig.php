@@ -5,6 +5,7 @@
 #App\GP247\Plugins\TropiPay\AppConfig.php
 namespace App\GP247\Plugins\TropiPay;
 
+use App\GP247\Plugins\TropiPay\Models\ExtensionModel;
 use GP247\Core\Models\AdminConfig;
 use GP247\Core\Models\AdminHome;
 use GP247\Core\ExtensionConfigDefault;
@@ -62,7 +63,7 @@ class AppConfig extends ExtensionConfigDefault
                 AdminConfig::insert($dataInsert);
 
                 // Inserta o actualiza las configuraciones específicas del plugin
-                $this->insertPluginConfigs();
+                $this->createConfigs(); // <-- LÍNEA CORREGIDA
 
                 (new ExtensionModel)->installExtension();
                 $return = ['error' => 0, 'msg' => gp247_language_render('admin.extension.install_success'), 'key' => $this->configKey];
@@ -189,7 +190,7 @@ class AppConfig extends ExtensionConfigDefault
             ['code' => 'TropiPay', 'key' => 'client_id', 'value' => '', 'sort' => 1, 'detail' => 'Client ID', 'store_id' => $storeId],
             ['code' => 'TropiPay', 'key' => 'client_secret', 'value' => '', 'sort' => 2, 'detail' => 'Client Secret', 'store_id' => $storeId],
             ['code' => 'TropiPay', 'key' => 'server_mode', 'value' => 'Development', 'sort' => 3, 'detail' => 'Server Mode', 'store_id' => $storeId],
-            ['code' => 'TropiPay', 'key' => 'currency', 'value' => 'EUR', 'sort' => 4, 'detail' => 'Currency', 'store_id' => $storeId],
+            ['code' => 'TropiPay', 'key' => 'currency', 'value' => 'USD', 'sort' => 4, 'detail' => 'Currency', 'store_id' => $storeId],
             ['code' => 'TropiPay', 'key' => 'status', 'value' => '1', 'sort' => 5, 'detail' => 'Status', 'store_id' => $storeId],
         ];
 
@@ -205,51 +206,5 @@ class AppConfig extends ExtensionConfigDefault
         }
     }
 
-    /**
-     * Insertar configuraciones específicas del plugin
-     */
-    private function insertPluginConfigs(&$dataInsert)
-    {
-        // Agrega aquí las configuraciones específicas del plugin
-        // Por ejemplo, para TropiPay:
-        $dataInsert[] = [
-            'group'  => $this->configGroup,
-            'code'   => $this->configCode.'_config', // Código para agrupar las configs
-            'key'    => 'client_id',
-            'sort'   => 0,
-            'store_id' => GP247_STORE_ID_GLOBAL,
-            'value'  => '',
-            'detail' => 'Client ID para TropiPay',
-        ];
-
-        $dataInsert[] = [
-            'group'  => $this->configGroup,
-            'code'   => $this->configCode.'_config',
-            'key'    => 'client_secret',
-            'sort'   => 0,
-            'store_id' => GP247_STORE_ID_GLOBAL,
-            'value'  => '',
-            'detail' => 'Client Secret para TropiPay',
-        ];
-
-        $dataInsert[] = [
-            'group'  => $this->configGroup,
-            'code'   => $this->configCode.'_config',
-            'key'    => 'server_mode',
-            'sort'   => 0,
-            'store_id' => GP247_STORE_ID_GLOBAL,
-            'value'  => 'Development',
-            'detail' => 'Modo del servidor TropiPay (Development/Production)',
-        ];
-
-        $dataInsert[] = [
-            'group'  => $this->configGroup,
-            'code'   => $this->configCode.'_config',
-            'key'    => 'currency',
-            'sort'   => 0,
-            'store_id' => GP247_STORE_ID_GLOBAL,
-            'value' => 'EUR',
-            'detail' => 'Moneda para TropiPay',
-        ];
-    }
+    
 }
