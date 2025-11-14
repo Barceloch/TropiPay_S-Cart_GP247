@@ -52,20 +52,20 @@ class AppConfig extends ExtensionConfigDefault
                     'key'    => $this->configKey,
                     'sort'   => 0,
                     'store_id' => GP247_STORE_ID_GLOBAL,
-                    'value'  => self::ON, //Enable extension
+                    'value' => self::ON, //Enable extension
                     'detail' => $this->appPath.'::lang.title',
                 ],
             ];
 
-            // Inserta las configuraciones específicas del plugin
-            $this->insertPluginConfigs($dataInsert);
-
             try {
-                AdminConfig::insert(
-                    $dataInsert
-                );
+                // Inserta la entrada principal del plugin
+                AdminConfig::insert($dataInsert);
+
+                // Inserta o actualiza las configuraciones específicas del plugin
+                $this->insertPluginConfigs();
+
                 (new ExtensionModel)->installExtension();
-                $return = ['error' => 0, 'msg' => gp247_language_render('admin.extension.install_success')];
+                $return = ['error' => 0, 'msg' => gp247_language_render('admin.extension.install_success'), 'key' => $this->configKey];
             } catch (\Throwable $e) {
                 $return = ['error' => 1, 'msg' => $e->getMessage()];
             }
