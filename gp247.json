@@ -1,0 +1,17 @@
+{
+    "name": "TropiPay Payment Gateway",
+    "title": "TropiPay Payment Gateway",
+    "image": "images/logo.jpg",
+    "auth": "Yunior Barceló",
+    "version": "1.0.0",
+    "link": "https://www.tropipay.com",
+    "configGroup": "Payment",
+    "configCode": "TropiPay",
+    "configKey": "TropiPay",
+    "type": "payment",
+    "requireCore": ["1.2"],
+    "requirePackages": {
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "requireExtensions": ["Shop"]
+}
