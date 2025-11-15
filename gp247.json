@@ -1,15 +1,12 @@
 {
-    "name": "TropiPay Payment Gateway",
-    "title": "TropiPay Payment Gateway",
-    "image": "images/logo.jpg",
-    "auth": "Yunior Barceló",
-    "version": "1.0",
-    "link": "https://www.tropipay.com",
-    "configGroup": "Plugins",
-    "configCode": "TropiPay",
-    "configKey": "TropiPay",
-    "type": "payment",
-    "requireCore": ["1.2"],
-    "requirePackages": ["guzzlehttp/guzzle"],
-    "requireExtensions": []
+  "name": "TropiPay Payment Gateway",
+  "image": "public/images/tropipay.png",
+  "auth": "Tu Nombre / Empresa",
+  "configGroup": "Plugins",
+  "configCode": "Payment",
+  "configKey": "TropiPay",
+  "version": "1.0.0",
+  "requireCore": ["1.1"],
+  "requirePackages": [],
+  "requireExtensions": []
 }

@@ -1,36 +1,17 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
-use App\GP247\Plugins\TropiPay\Controllers\PaymentController;
+use App\GP247\Plugins\TropiPay\Controllers\TropiPayController;
+use App\GP247\Plugins\TropiPay\Admin\TropiPayAdminController;
 
-$config = file_get_contents(__DIR__.'/gp247.json');
-$config = json_decode($config, true);
+Route::group(['prefix' => 'plugin/tropipay', 'middleware' => ['web']], function () {
+    Route::get('/start/{orderId}', [TropiPayController::class, 'startPayment'])->name('tropipay.start');
+    Route::get('/return', [TropiPayController::class, 'handleReturn'])->name('tropipay.return');
+    Route::post('/webhook', [TropiPayController::class, 'webhook'])->name('tropipay.webhook');
+});
 
-if(gp247_extension_check_active($config['configGroup'], $config['configKey'])) {
-
-    // Rutas de pago (CRÍTICAS)
-    Route::group(['prefix' => 'tropipay', 'middleware' => ['web']], function () {
-        Route::post('process', [PaymentController::class, 'process'])->name('tropipay.process');
-        Route::get('success', [PaymentController::class, 'success'])->name('tropipay.success');
-        Route::get('failed', [PaymentController::class, 'failed'])->name('tropipay.failed');
-        Route::post('webhook', [PaymentController::class, 'webhook'])->name('tropipay.webhook');
-    });
-
-    // Ruta frontend (opcional)
-    Route::group([
-        'middleware' => GP247_FRONT_MIDDLEWARE,
-        'prefix'    => 'plugin/tropipay',
-        'namespace' => 'App\GP247\Plugins\TropiPay\Controllers',
-    ], function () {
-        //Route::get('index', 'FrontController@index')->name('tropipay.index');
-    });
-
-    // Rutas admin
-    Route::group([
-        'prefix' => GP247_ADMIN_PREFIX.'/tropipay',
-        'middleware' => GP247_ADMIN_MIDDLEWARE,
-        'namespace' => '\App\GP247\Plugins\TropiPay\Admin',
-    ], function () {
-        Route::get('/', 'AdminController@index')->name('admin_tropipay.index');
-        Route::post('save', 'AdminController@save')->name('admin_tropipay.save');
-    });
-}
+// Rutas de administración (ajusta el prefijo según tu configuración GP247_ADMIN_PREFIX)
+Route::group(['prefix' => config('gp247.admin_prefix', 'gp247_admin') . '/tropipay', 'middleware' => ['web', 'gp247.admin']], function () {
+    Route::get('/', [TropiPayAdminController::class, 'index'])->name('tropipay.admin.config');
+    Route::post('/', [TropiPayAdminController::class, 'save'])->name('tropipay.admin.config.save');
+});
