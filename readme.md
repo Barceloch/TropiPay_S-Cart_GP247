@@ -34,3 +34,7 @@ Plugin completo de integración con TropiPay API v3 para S-Cart GP247. Permite a
 
 4. **Configurar Webhooks (Producción)**
    - En tu cuenta TropiPay, configurar el webhook URL:
+
+![dashboard](img3.png)
+![settings](img2.png)
+![orders](img1.png)
