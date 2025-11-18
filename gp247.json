@@ -1,0 +1,14 @@
+{
+    "name": "TropiPay Payment Gateway",
+    "image": "images/tropipay-logo.png",
+    "auth": "Yunior Barceló",
+    "email": "barceloch@gmail.com",
+    "link": "https://github.com/Barceloch",
+    "configGroup": "Plugins",
+    "configCode": "Payment",
+    "configKey": "TropiPay",
+    "version": "1.0.0",
+    "requireCore": ["1.1"],
+    "requirePackages": ["gp247/shop"],
+    "requireExtensions": []
+}
